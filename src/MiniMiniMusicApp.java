@@ -3,7 +3,7 @@ import javax.sound.midi.*;
 /**
  * Created by Mark on 29/07/2016.
  */
-public class MiniMiniMusicApp {
+public class MiniMiniMusicApp implements ControllerEventListener{
     public static void main(String[] args){
         MiniMiniMusicApp mini = new MiniMiniMusicApp();
         mini.play();
@@ -11,31 +11,40 @@ public class MiniMiniMusicApp {
     public void play(){
         try{
             Sequencer player = MidiSystem.getSequencer(); //retrive a sequencer object - can throw an exception
+            int[] eventsIWant = {127};
+            player.addControllerEventListener(this, eventsIWant);
             player.open(); //sequence opens to be used
             Sequence seq = new Sequence(Sequence.PPQ, 4);
             Track track = seq.createTrack();
 
-            //Change instrument message
-            ShortMessage first = new ShortMessage();
-            first.setMessage(192, 1, 102, 0);
-            MidiEvent firstMsg = new MidiEvent(first,1);
-            track.add(firstMsg);
-            //Following code adds 2 events to the track which will be played as a single piano note
-            ShortMessage a = new ShortMessage();
-            a.setMessage(144,1,44,100);
-            MidiEvent noteOn = new MidiEvent(a,1);
-            track.add(noteOn);
-
-            ShortMessage b = new ShortMessage();
-            b.setMessage(128,1,44,100);
-            MidiEvent noteOff = new MidiEvent(b,3);
-            track.add(noteOff);
+            for (int i = 5; i < 61; i+= 4) {
+                track.add(makeEvent(144,1,i,100,i));
+                track.add(makeEvent(176,1,127,0,i));
+                track.add(makeEvent(128,1,i,100,i+2));
+            }
 
             player.setSequence(seq);
+            player.setTempoInBPM(220);
             player.start(); //like pressing play on a tape player
         }
         catch(Exception ex){
+            ex.printStackTrace();
+        }
+    }
+    public static MidiEvent makeEvent(int comd,int chan, int one, int two, int tick){
+        MidiEvent event = null;
+        try{
+            ShortMessage a = new ShortMessage();
+            a.setMessage(comd, chan, one, two);
+            event = new MidiEvent(a, tick);
+        }catch(Exception ex){
 
         }
+        return event;
+    }
+
+    @Override
+    public void controlChange(ShortMessage shortMessage) {
+
     }
 }
